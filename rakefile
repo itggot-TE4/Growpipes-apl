@@ -1,0 +1,10 @@
+require 'bundler'
+Bundler.require
+
+namespace :db do
+    task :seed do
+        require_relative 'db/seeder.rb'
+        Seeder.seed!
+    end
+end
+
