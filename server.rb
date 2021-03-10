@@ -27,9 +27,7 @@ sinatra_thread = Thread.new do
         get '/' do
             @db = SQLite3::Database.new('db/data.db')
             
-            latime = get_times_by_sensor(1).max
-            response = get_sensor_data_by_time(latime)
-            p response
+            response = get_latest_record_of_each_sensor()
             sleep 3
             return response.to_json
         end
@@ -44,41 +42,54 @@ sinatra_thread = Thread.new do
             @db = SQLite3::Database.new('db/data.db')
             id = params["id"].to_i
 
-            # if id == 1
-            #     response = [5,4,3,2,1]
-            # elsif id == 2
-            #     response = [1,2,3,4,5]
-            # end
             response = @db.execute("SELECT data,date FROM daily_data where sensor_id = #{id}")
 
             return response.to_json
         end
 
 
-        def get_times_by_sensor(sensor_id)
-            new_time_list = []
-            @db = SQLite3::Database.new('db/data.db') 
-            dates = @db.execute("SELECT date FROM data_manager where sensor_id = #{sensor_id}")
-            for date in dates do
-                new_time_list << Time.parse(date[0])
+        def get_latest_record_of_each_sensor()
+
+            @db = SQLite3::Database.new('db/data.db')
+            sensors = @db.execute('SELECT * FROM sensors')
+            sensor_list = []
+            for sensor in sensors do 
+                sensor_value = @db.execute('SELECT id,type,data,date,time
+                                            FROM data_manager
+                                            INNER JOIN sensors
+                                            ON sensors.id = data_manager.sensor_id
+                                            WHERE sensor_id = ?
+                                            ORDER BY data_id DESC LIMIT 1', [sensor[0]])
+                sensor_list << sensor_value[0]
             end
-            return new_time_list
+            return sensor_list
         end
 
-        def get_sensor_data_by_time(time)
+
+        # def get_times_by_sensor(sensor_id)
+        #     new_time_list = []
+        #     @db = SQLite3::Database.new('db/data.db') 
+        #     dates = @db.execute("SELECT date FROM data_manager where sensor_id = #{sensor_id}")
+        #     for date in dates do
+        #         new_time_list << Time.parse(date[0])
+        #     end
+        #     return new_time_list
+        # end
+
+        # def get_sensor_data_by_time(time)
             
-            @db = SQLite3::Database.new('db/data.db') 
-            sensors = @db.execute('SELECT id FROM sensors')
-            messurmentlist = @db.execute('SELECT id,type,data,date 
-                                        FROM data_manager
-                                        INNER JOIN sensors
-                                        ON sensors.id = data_manager.sensor_id 
-                                        WHERE date = ?', [time.to_s])
+        #     @db = SQLite3::Database.new('db/data.db') 
+        #     sensors = @db.execute('SELECT id FROM sensors')
+        #     messurmentlist = @db.execute('SELECT id,type,data,date 
+        #                                 FROM data_manager
+        #                                 INNER JOIN sensors
+        #                                 ON sensors.id = data_manager.sensor_id 
+        #                                 WHERE date = ?', [time.to_s])
             
 
-            return messurmentlist
+        #     return messurmentlist
 
-        end
+        # end
 
 
         run!
@@ -103,8 +114,9 @@ class DataReceiver
             if input[0] == "temp"   
                 puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
                 time = Time.new
-                time = time.to_s
-                @db.execute("INSERT INTO data_manager (sensor_id,data , date) VALUES(?,?,?)", [input[1],input[2],time])
+                date = time.strftime("%d/%m/%Y")
+                time = time.strftime("%H:%M:%S")
+                @db.execute("INSERT INTO data_manager (sensor_id,data , date, time) VALUES(?,?,?,?)", [input[1],input[2],date,time])
             end
 
             t = Time.new.strftime('%H:%M')
@@ -123,8 +135,8 @@ class DataReceiver
         sensors = @db.execute("SELECT id FROM sensors")
         for sensor in sensors do
             average = 0.0
-            data = @db.execute("SELECT data FROM data_manager WHERE sensor_id = ?", [sensor[0]])
-            
+            data = @db.execute("SELECT data FROM data_manager WHERE sensor_id = ? AND date = ?", [sensor[0], Time.new.strftime("%d/%m/%Y")])
+
             for value in data do
                 average += value[0]
             end
@@ -134,11 +146,6 @@ class DataReceiver
             time = time.strftime("%d/%m/%Y")
             @db.execute("INSERT INTO daily_data (sensor_id,data, date) VALUES(?,?,?)", [sensor[0], average, time])
         end
-        @db.execute("DROP TABLE IF EXISTS data_manager")
-        @db.execute('CREATE TABLE data_manager(
-                    "sensor_id" INTEGER NOT NULL,
-                    "data" INTEGER NOT NULL,
-                    "date" TEXT)')
     end
 
 

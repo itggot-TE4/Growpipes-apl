@@ -1,7 +1,7 @@
 <template>
     <main>
         <h1>{{type}} Sensor: {{id}}</h1>
-        <apexchart width="500" type="line" :options="options" :series="series"></apexchart>
+        <apexchart v-if="loaded_data" width="500" type="line" :options="options" :series="series"></apexchart>
     </main>
 </template>
 
@@ -16,39 +16,40 @@ export default {
         return{
             options: {
                 chart: {
-                    id: 'vuechart-example'
+                    id: 'vuechart-example',
+                    foreColor: '#000'
                 },
                 xaxis: {
-                    categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998]
+                    categories: Array
                 }
             },
             series: [{
                 name: 'series-1',
                 data: Array
-            }]
+            }],
+            loaded_data: false
         }
     },
     methods: {
         async get_data(id){
-            console.log(id)
-            if (id == 1){
-                this.series[0].data = [1,6,2,8,5,6,7]
-            }else if(id == 2){
-                this.series[0].data = [2,10,1,5,6,3,9]
-            }
+            
             let response = await fetch(`http://localhost:4567/sensor_data/${id}`,{
                 method: 'GET',
                 mode: 'cors'
             })
             let data = (await response.json())
 
-            // value_list = []
-            // category_list = []
-            // data.forEach(value => {
-            //     value_list.push
-            // })
+            let value_list = []
+            let category_list = []
+            data.forEach(value => {
+                value_list.push(value[0])
+                category_list.push(value[1])
+            })
+          
+            this.series[0].data = value_list
+            this.options.xaxis.categories = category_list
 
-            console.log(data)
+            this.loaded_data = true
         }
     },
     beforeMount(){
@@ -61,6 +62,6 @@ export default {
     main{
         width: 600px;
         height: 400px;
-        background-color: purple;
+        background-color: lightgray;
     }
 </style>
