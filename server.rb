@@ -99,29 +99,23 @@ end
 
 class DataReceiver
 
-    def initialize
+    def initialize()
         @port = SerialPort.new '/dev/tty.usbmodem1412401', 9600
+        @port.read_timeout = 3000
         @db = SQLite3::Database.new('db/data.db') 
         @allow = true
     end
 
     def serve
         loop do
-            
-            
-            input = @port.gets.strip
-            input = input.split(":")
+            sleep 3
 
-            if input[0] == "temp"   
-                puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
-                if input[2].to_i >= 26
-                    warning_mailer('tintin.wihlborg@elev.ga.ntig.se', input[0] + ': Warning', input[0] + ":sensor" + input[1] + " Has a value of: " + input[2])
-                end
-                time = Time.new
-                date = time.strftime("%d/%m/%Y")
-                time = time.strftime("%H:%M:%S")
-                @db.execute("INSERT INTO data_manager (sensor_id,data , date, time) VALUES(?,?,?,?)", [input[1],input[2],date,time])
-            end
+            fetch_temp(1)
+            fetch_temp(2)
+
+            
+
+            
 
             t = Time.new.strftime('%H:%M')
             if t == "23:59" && @allow
@@ -131,6 +125,23 @@ class DataReceiver
                 @allow = true
             end
 
+        end
+    end
+
+    def fetch_temp(id)
+        @port.write("temp#{id}/")
+        input = @port.gets.strip
+        input = input.split(":")
+        
+        if input[0] == "temp"   
+            puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
+            if input[2].to_i >= 26
+                warning_mailer('tintin.wihlborg@elev.ga.ntig.se', input[0] + ': Warning', input[0] + ":sensor" + input[1] + " Has a value of: " + input[2])
+            end
+            time = Time.new
+            date = time.strftime("%d/%m/%Y")
+            time = time.strftime("%H:%M:%S")
+            @db.execute("INSERT INTO data_manager (sensor_id,data , date, time) VALUES(?,?,?,?)", [input[1],input[2],date,time])
         end
     end
 
