@@ -14,7 +14,7 @@ class Seeder
             PRIMARY KEY("id"))';
         db.execute 'CREATE TABLE daily_data(
             "sensor_id" INTEGER NOT NULL,
-            "data" INTEGER NOT NULL,
+            "data" INTEGER,
             "date" TEXT)';
         db.execute 'CREATE TABLE data_manager(
             "data_id" INTEGER NOT NULL,
@@ -31,7 +31,10 @@ class Seeder
 
         db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, 23, "23/4/2020"])
         db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, 27, "24/4/2020"])
-        db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, 32, "25/4/2020"])
+        db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, -1, "25/4/2020"])
+        db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, 82, "26/4/2020"])
+        db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[1, 96, "27/4/2020"])
+
         db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[2, 42, "23/4/2020"])
         db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[2, 22, "24/4/2020"])
         db.execute('INSERT INTO daily_data (sensor_id, data, date) VALUES(?,?,?)',[2, 13, "25/4/2020"])

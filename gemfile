@@ -13,3 +13,5 @@ gem 'slim'
 gem 'rerun'
 
 gem 'sinatra-cross_origin'
+
+gem 'mail'

@@ -42,7 +42,11 @@ export default {
             let value_list = []
             let category_list = []
             data.forEach(value => {
-                value_list.push(value[0])
+                if (value[0] > 0){
+                    value_list.push(value[0])
+                }else {
+                    value_list.push(null)
+                }
                 category_list.push(value[1])
             })
           

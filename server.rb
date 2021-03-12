@@ -3,7 +3,8 @@ require 'serialport'
 require 'sqlite3'
 require 'sinatra/cross_origin'
 require 'time'
-
+require 'mail'
+require_relative './credentials'
 
 
 # puts "How many times do you want it to blink?"
@@ -113,6 +114,9 @@ class DataReceiver
 
             if input[0] == "temp"   
                 puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
+                if input[2].to_i >= 26
+                    warning_mailer('tintin.wihlborg@elev.ga.ntig.se', input[0] + ': Warning', input[0] + ":sensor" + input[1] + " Has a value of: " + input[2])
+                end
                 time = Time.new
                 date = time.strftime("%d/%m/%Y")
                 time = time.strftime("%H:%M:%S")
@@ -148,6 +152,22 @@ class DataReceiver
         end
     end
 
+    def warning_mailer(recipient,subjects,body_message)
+
+        
+        
+        Mail.defaults do
+            delivery_method :smtp, @@credentials
+        end
+
+        Mail.deliver do
+                    to recipient
+                from 'grunka.test@gmail.com'
+            subject subjects
+                body body_message
+        end
+
+    end
 
 end
 
