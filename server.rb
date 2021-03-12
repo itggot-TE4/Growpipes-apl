@@ -155,7 +155,6 @@ class DataReceiver
     def warning_mailer(recipient,subjects,body_message)
 
         
-        
         Mail.defaults do
             delivery_method :smtp, @@credentials
         end
