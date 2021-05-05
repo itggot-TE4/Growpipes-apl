@@ -1,0 +1,14 @@
+One per protcol
+msg: init protco
+proto: onewire
+pin: 4
+
+One per sensor
+msg: init sensor
+proto: onewire
+type: temp
+
+One per request
+msg: read sensor
+type: dalas
+id: 1

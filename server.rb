@@ -5,6 +5,8 @@ require 'sinatra/cross_origin'
 require 'time'
 require 'mail'
 require_relative './credentials'
+require_relative 'sensor_classes/Sensor'
+require_relative 'sensor_classes/FakeSensor'
 
 
 # puts "How many times do you want it to blink?"
@@ -43,6 +45,7 @@ sinatra_thread = Thread.new do
             @db = SQLite3::Database.new('db/data.db')
             id = params["id"].to_i
 
+        
             response = @db.execute("SELECT data,date FROM daily_data where sensor_id = #{id}")
 
             return response.to_json
@@ -100,25 +103,43 @@ end
 class DataReceiver
 
     def initialize()
-        @port = SerialPort.new '/dev/tty.usbmodem1412401', 9600
-        @port.read_timeout = 3000
+
         @db = SQLite3::Database.new('db/data.db') 
         @allow = true
+
+
+        if serial_checker()
+            @port = SerialPort.new '/dev/tty.usbmodem1412401', 9600
+            @port.read_timeout = 3000
+            # @sensor0 = Sensor.new(0,"ph", @port, @db, ard_id)
+            @sensor1 = Sensor.new(1,"th", @port, @db, 0)
+            @sensor2 = Sensor.new(2,"th", @port, @db, 1)
+        else
+          
+            @sensor1 = FakeSensor.new(1,"th", @db)
+            @sensor2 = FakeSensor.new(2,"th", @db)
+            
+        end
+
+        
+      
     end
 
     def serve
-        loop do
+        loop do 
             sleep 3
 
-            fetch_temp(1)
-            fetch_temp(2)
-
+            # fetch_temp(1)
+            # fetch_temp(2)
+            
             
 
+            @sensor1.read_sensor()
+            @sensor2.read_sensor()
             
 
             t = Time.new.strftime('%H:%M')
-            if t == "23:59" && @allow
+              if t == "23:59" && @allow
                 @allow = false
                 save_daily_data()
             elsif t == "0:00"
@@ -128,22 +149,33 @@ class DataReceiver
         end
     end
 
-    def fetch_temp(id)
-        @port.write("temp#{id}/")
-        input = @port.gets.strip
-        input = input.split(":")
-        
-        if input[0] == "temp"   
-            puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
-            if input[2].to_i >= 26
-                warning_mailer('tintin.wihlborg@elev.ga.ntig.se', input[0] + ': Warning', input[0] + ":sensor" + input[1] + " Has a value of: " + input[2])
-            end
-            time = Time.new
-            date = time.strftime("%d/%m/%Y")
-            time = time.strftime("%H:%M:%S")
-            @db.execute("INSERT INTO data_manager (sensor_id,data , date, time) VALUES(?,?,?,?)", [input[1],input[2],date,time])
+    def serial_checker()
+
+        begin
+            port_to_check = SerialPort.new '/dev/tty.usbmodem1412401', 9600
+            return true
+        rescue => exception
+            return false
         end
+
     end
+
+    # def fetch_temp(id)
+    #     @port.write("temp#{id}/")
+    #     input = @port.gets.strip
+    #     input = input.split(":")
+        
+    #     if input[0] == "temp"   
+    #         puts input[0] + ":sensor" + input[1] + " has the value of: " + input[2]
+    #         if input[2].to_i >= 26
+    #             warning_mailer('tintin.wihlborg@elev.ga.ntig.se', input[0] + ': Warning', input[0] + ":sensor" + input[1] + " Has a value of: " + input[2])
+    #         end
+    #         time = Time.new
+    #         date = time.strftime("%d/%m/%Y")
+    #         time = time.strftime("%H:%M:%S")
+    #         @db.execute("INSERT INTO data_manager (sensor_id,data , date, time) VALUES(?,?,?,?)", [input[1],input[2],date,time])
+    #     end
+    # end
 
     def save_daily_data()
         
