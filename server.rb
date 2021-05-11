@@ -195,21 +195,21 @@ class DataReceiver
         end
     end
 
-    def warning_mailer(recipient,subjects,body_message)
+    # def warning_mailer(recipient,subjects,body_message)
 
         
-        Mail.defaults do
-            delivery_method :smtp, @@credentials
-        end
+    #     Mail.defaults do
+    #         delivery_method :smtp, @@credentials
+    #     end
 
-        Mail.deliver do
-                    to recipient
-                from 'grunka.test@gmail.com'
-            subject subjects
-                body body_message
-        end
+    #     Mail.deliver do
+    #                 to recipient
+    #             from 'grunka.test@gmail.com'
+    #         subject subjects
+    #             body body_message
+    #     end
 
-    end
+    # end
 
 end
 
